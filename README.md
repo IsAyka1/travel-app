@@ -1,17 +1,19 @@
-# my_test
+# Travel Atlas
 
-A new Flutter project.
+A Flutter travel planner with four pages: Overview, Map, Places to visit, and Files.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- Add, edit, search, and mark places visited. Places are saved on the device.
+- See saved places on an OpenStreetMap map. Long-press the map to add a place at that location. Map tiles require an internet connection.
+- Import files from the device into the app's documents folder, then save copies back to a chosen device location. The file page works on Android, iOS, Windows, macOS, and Linux. The web build displays an unsupported message for local app file storage.
+- Navigate from the sidebar on a wide screen or the drawer on a small screen.
 
-A few resources to get you started if this is your first Flutter project:
+## Run
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```sh
+flutter pub get
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Imported files are stored in the app documents directory under `travel_app/files`. File metadata is in `travel_app/files.json`; saved places use `shared_preferences`. Removing an imported file does not delete its original source file.

@@ -5,7 +5,7 @@ A Flutter travel planner with four pages: Overview, Map, Places to visit, and Fi
 ## Features
 
 - Add, edit, search, and mark places visited. Places are saved on the device.
-- See saved places on an OpenStreetMap map. Long-press the map to add a place at that location. Map tiles require an internet connection.
+- Search for cities, addresses, and landmarks on the OpenStreetMap map. Select a result to center the map, then save it to Places to visit. You can also long-press the map to add a place at that location. Map tiles and search require an internet connection. Search uses the Photon public demo service, which is intended for modest use and has no uptime guarantee.
 - Import files from the device into the app's documents folder, then save copies back to a chosen device location. The file page works on Android, iOS, Windows, macOS, and Linux. The web build displays an unsupported message for local app file storage.
 - Navigate from the sidebar on a wide screen or the drawer on a small screen.
 

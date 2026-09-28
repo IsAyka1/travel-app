@@ -3,6 +3,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../features/files/files_page.dart';
 import '../features/map/map_page.dart';
+import '../features/map/place_search_service.dart';
 import '../features/places/place.dart';
 import '../features/places/place_editor.dart';
 import '../features/places/places_page.dart';
@@ -91,8 +92,12 @@ class _TravelShellState extends State<TravelShell> {
     });
   }
 
-  Future<void> _addPlace({LatLng? location}) async {
-    final place = await showPlaceEditor(context, location: location);
+  Future<void> _addPlace({LatLng? location, String? name}) async {
+    final place = await showPlaceEditor(
+      context,
+      location: location,
+      initialName: name,
+    );
     if (place == null || !mounted) return;
     try {
       await widget.controller.addPlace(place);
@@ -118,6 +123,8 @@ class _TravelShellState extends State<TravelShell> {
           controller: widget.controller,
           focus: mapFocus,
           onAddAt: (point) => _addPlace(location: point),
+          onSaveFoundPlace: (FoundPlace found) =>
+              _addPlace(location: found.point, name: found.name),
         );
       case 2:
         return PlacesPage(

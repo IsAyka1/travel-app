@@ -7,18 +7,24 @@ Future<Place?> showPlaceEditor(
   BuildContext context, {
   Place? place,
   LatLng? location,
+  String? initialName,
 }) {
   return showDialog<Place>(
     context: context,
-    builder: (_) => _PlaceEditorDialog(place: place, location: location),
+    builder: (_) => _PlaceEditorDialog(
+      place: place,
+      location: location,
+      initialName: initialName,
+    ),
   );
 }
 
 class _PlaceEditorDialog extends StatefulWidget {
-  const _PlaceEditorDialog({this.place, this.location});
+  const _PlaceEditorDialog({this.place, this.location, this.initialName});
 
   final Place? place;
   final LatLng? location;
+  final String? initialName;
 
   @override
   State<_PlaceEditorDialog> createState() => _PlaceEditorDialogState();
@@ -26,7 +32,9 @@ class _PlaceEditorDialog extends StatefulWidget {
 
 class _PlaceEditorDialogState extends State<_PlaceEditorDialog> {
   final formKey = GlobalKey<FormState>();
-  late final name = TextEditingController(text: widget.place?.name ?? '');
+  late final name = TextEditingController(
+    text: widget.place?.name ?? widget.initialName ?? '',
+  );
   late final notes = TextEditingController(text: widget.place?.notes ?? '');
   late final latitude = TextEditingController(
     text:

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/travel_controller.dart';
+import 'file_preview_page.dart';
 import 'stored_file.dart';
 
 class FilesPage extends StatefulWidget {
@@ -140,7 +141,7 @@ class _FilesPageState extends State<FilesPage> {
             padding: EdgeInsets.all(16),
             child: Text(
               'Imported files are copied into this app’s documents folder on your device. '
-              'Use Save to device to download a copy to a location you choose.',
+              'Tap a file to view it here, or use Save to device to keep a copy elsewhere.',
             ),
           ),
         ),
@@ -188,9 +189,27 @@ class _FilesPageState extends State<FilesPage> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 subtitle: Text(_size(file.size)),
+                onTap: busy
+                    ? null
+                    : () => openFilePreview(
+                        context,
+                        controller: widget.controller,
+                        file: file,
+                      ),
                 trailing: Wrap(
                   spacing: 4,
                   children: [
+                    IconButton(
+                      tooltip: 'View ${file.name}',
+                      onPressed: busy
+                          ? null
+                          : () => openFilePreview(
+                              context,
+                              controller: widget.controller,
+                              file: file,
+                            ),
+                      icon: const Icon(Icons.visibility_outlined),
+                    ),
                     IconButton(
                       tooltip: 'Save ${file.name} to device',
                       onPressed: busy ? null : () => _export(file),

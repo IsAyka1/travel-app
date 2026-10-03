@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/travel_controller.dart';
-import '../files/stored_file.dart';
+import '../files/file_preview_page.dart';
 import 'place.dart';
 import 'place_editor.dart';
 import 'trip_action.dart';
@@ -390,9 +390,13 @@ class _PlacesPageState extends State<PlacesPage> {
               const Text('Linked place is no longer available'),
             if (attachment != null)
               TextButton.icon(
-                onPressed: () => _exportAttachment(attachment),
+                onPressed: () => openFilePreview(
+                  context,
+                  controller: widget.controller,
+                  file: attachment,
+                ),
                 icon: const Icon(Icons.attach_file),
-                label: Text('Save ${attachment.name} to device'),
+                label: Text('View ${attachment.name}'),
               )
             else if (action.attachmentId != null)
               const Text('Attachment is no longer available'),
@@ -499,23 +503,6 @@ class _PlacesPageState extends State<PlacesPage> {
     );
     if (confirmed == true) {
       await _run(() => widget.controller.deleteAction(action.id));
-    }
-  }
-
-  Future<void> _exportAttachment(StoredFile file) async {
-    try {
-      final saved = await widget.controller.exportFile(file);
-      if (mounted && saved != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Saved ${file.name} to your device')),
-        );
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not save attachment: $error')),
-        );
-      }
     }
   }
 

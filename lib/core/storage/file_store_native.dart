@@ -88,6 +88,12 @@ class FileStore {
     );
   }
 
+  Future<String> pathFor(StoredFile file) async =>
+      (await _storedFile(file)).path;
+
+  Future<List<int>> readFile(StoredFile file) async =>
+      (await _storedFile(file)).readAsBytes();
+
   Future<void> deleteFile(StoredFile file) async {
     final stored = await _storedFile(file);
     if (await stored.exists()) await stored.delete();

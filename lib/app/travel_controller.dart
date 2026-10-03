@@ -129,6 +129,10 @@ class TravelController extends ChangeNotifier {
 
   Future<Uri?> exportFile(StoredFile file) => _fileStore.exportFile(file);
 
+  Future<String> filePath(StoredFile file) => _fileStore.pathFor(file);
+
+  Future<List<int>> readFile(StoredFile file) => _fileStore.readFile(file);
+
   Future<void> deleteFile(StoredFile file) async {
     final next = _files.where((current) => current.id != file.id).toList();
     await _fileStore.saveFiles(next);

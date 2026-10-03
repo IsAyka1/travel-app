@@ -18,6 +18,14 @@ class FileStore {
     'Local file storage is available in the device app.',
   );
 
+  Future<String> pathFor(StoredFile file) async => throw UnsupportedError(
+    'Local file storage is available in the device app.',
+  );
+
+  Future<List<int>> readFile(StoredFile file) async => throw UnsupportedError(
+    'Local file storage is available in the device app.',
+  );
+
   Future<void> deleteFile(StoredFile file) async => throw UnsupportedError(
     'Local file storage is available in the device app.',
   );

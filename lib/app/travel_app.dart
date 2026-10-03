@@ -7,6 +7,7 @@ import '../features/map/place_search_service.dart';
 import '../features/places/place.dart';
 import '../features/places/place_editor.dart';
 import '../features/places/places_page.dart';
+import '../features/sharing/trip_transfer_page.dart';
 import '../features/visa/visa_page.dart';
 import 'travel_controller.dart';
 
@@ -72,13 +73,21 @@ class _TravelShellState extends State<TravelShell> {
   int selectedPage = 0;
   Place? mapFocus;
 
-  static const titles = ['Overview', 'Map', 'Places to visit', 'Files', 'Visa'];
+  static const titles = [
+    'Overview',
+    'Map',
+    'Places to visit',
+    'Files',
+    'Visa',
+    'Share trips',
+  ];
   static const icons = [
     Icons.dashboard_outlined,
     Icons.map_outlined,
     Icons.place_outlined,
     Icons.folder_outlined,
     Icons.description_outlined,
+    Icons.share_outlined,
   ];
   static const selectedIcons = [
     Icons.dashboard,
@@ -86,6 +95,7 @@ class _TravelShellState extends State<TravelShell> {
     Icons.place,
     Icons.folder,
     Icons.description,
+    Icons.share,
   ];
 
   void _navigate(int index, {Place? place}) {
@@ -144,6 +154,8 @@ class _TravelShellState extends State<TravelShell> {
         return FilesPage(controller: widget.controller);
       case 4:
         return VisaPage(controller: widget.controller);
+      case 5:
+        return TripTransferPage(controller: widget.controller);
       default:
         return _OverviewPage(
           controller: widget.controller,
@@ -152,6 +164,7 @@ class _TravelShellState extends State<TravelShell> {
           onOpenPlaces: () => _navigate(2),
           onOpenFiles: () => _navigate(3),
           onOpenVisas: () => _navigate(4),
+          onOpenSharing: () => _navigate(5),
         );
     }
   }
@@ -249,6 +262,7 @@ class _OverviewPage extends StatelessWidget {
     required this.onOpenPlaces,
     required this.onOpenFiles,
     required this.onOpenVisas,
+    required this.onOpenSharing,
   });
 
   final TravelController controller;
@@ -257,6 +271,7 @@ class _OverviewPage extends StatelessWidget {
   final VoidCallback onOpenPlaces;
   final VoidCallback onOpenFiles;
   final VoidCallback onOpenVisas;
+  final VoidCallback onOpenSharing;
 
   @override
   Widget build(BuildContext context) {
@@ -413,6 +428,11 @@ class _OverviewPage extends StatelessWidget {
               onPressed: onOpenVisas,
               icon: const Icon(Icons.description_outlined),
               label: const Text('Visa plans'),
+            ),
+            OutlinedButton.icon(
+              onPressed: onOpenSharing,
+              icon: const Icon(Icons.share_outlined),
+              label: const Text('Share trips'),
             ),
           ],
         ),

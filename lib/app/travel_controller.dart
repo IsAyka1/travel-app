@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -8,6 +9,7 @@ import '../core/storage/file_store.dart';
 import '../features/files/stored_file.dart';
 import '../features/places/place.dart';
 import '../features/places/trip_action.dart';
+import '../features/sharing/trip_package.dart';
 import '../features/visa/visa_plan.dart';
 
 class TravelController extends ChangeNotifier {
@@ -127,6 +129,146 @@ class TravelController extends ChangeNotifier {
 
   Future<void> deleteVisaPlan(String id) =>
       _saveVisaPlans(_visaPlans.where((plan) => plan.id != id).toList());
+
+  Future<Uint8List> createTripPackage() async {
+    final contents = <String, Uint8List>{};
+    var totalBytes = 0;
+    for (final file in _files) {
+      totalBytes += file.size;
+      if (totalBytes > TripPackageCodec.maxPackageBytes) {
+        throw const FormatException('Trip attachments are too large to share.');
+      }
+      contents[file.id] = Uint8List.fromList(await _fileStore.readFile(file));
+    }
+    return compute(
+      TripPackageCodec.encode,
+      TripPackage(
+        places: _places,
+        actions: _actions,
+        visaPlans: _visaPlans,
+        files: _files,
+        fileBytes: contents,
+      ),
+    );
+  }
+
+  Future<TripPackage> readTripPackage(List<int> bytes) =>
+      compute(TripPackageCodec.decode, Uint8List.fromList(bytes));
+
+  Future<void> importTripPackage(TripPackage package) async {
+    if (package.files.isNotEmpty && !supportsFiles) {
+      throw UnsupportedError('Attachments cannot be imported on this device.');
+    }
+    final placeIds = {
+      for (final place in package.places) place.id: _newImportedId(),
+    };
+    final importedFiles = <StoredFile>[];
+    var startedPersisting = false;
+    try {
+      final fileIds = <String, String>{};
+      for (final file in package.files) {
+        final imported = await _fileStore.importBytes(
+          file.name,
+          package.fileBytes[file.id]!,
+        );
+        importedFiles.add(imported);
+        fileIds[file.id] = imported.id;
+      }
+      final nextPlaces = [
+        ..._places,
+        for (final place in package.places)
+          Place(
+            id: placeIds[place.id]!,
+            name: place.name,
+            notes: place.notes,
+            latitude: place.latitude,
+            longitude: place.longitude,
+            visited: place.visited,
+            createdAt: place.createdAt,
+            plannedFor: place.plannedFor,
+          ),
+      ];
+      final nextActions = [
+        ..._actions,
+        for (final action in package.actions)
+          TripAction(
+            id: _newImportedId(),
+            title: action.title,
+            notes: action.notes,
+            day: action.day,
+            minutesFromMidnight: action.minutesFromMidnight,
+            done: action.done,
+            reservation: action.reservation,
+            placeId: placeIds[action.placeId],
+            attachmentId: fileIds[action.attachmentId],
+            createdAt: action.createdAt,
+          ),
+      ];
+      final nextVisaPlans = [
+        ..._visaPlans,
+        for (final plan in package.visaPlans)
+          VisaPlan(
+            id: _newImportedId(),
+            destination: plan.destination,
+            visaRequired: plan.visaRequired,
+            applicationRequired: plan.applicationRequired,
+            allowedStayDays: plan.allowedStayDays,
+            checklist: [
+              for (final item in plan.checklist)
+                VisaChecklistItem(
+                  id: _newImportedId(),
+                  title: item.title,
+                  done: item.done,
+                ),
+            ],
+          ),
+      ];
+      final nextFiles = [..._files, ...importedFiles];
+      startedPersisting = true;
+      await _fileStore.saveFiles(nextFiles);
+      await _preferences.setString(_placesKey, _encodePlaces(nextPlaces));
+      await _preferences.setString(_actionsKey, _encodeActions(nextActions));
+      await _preferences.setString(
+        _visaPlansKey,
+        _encodeVisaPlans(nextVisaPlans),
+      );
+      _places = nextPlaces;
+      _actions = nextActions;
+      _visaPlans = nextVisaPlans;
+      _files = nextFiles;
+      notifyListeners();
+    } catch (_) {
+      if (startedPersisting) {
+        try {
+          await _fileStore.saveFiles(_files);
+          await _preferences.setString(_placesKey, _encodePlaces(_places));
+          await _preferences.setString(_actionsKey, _encodeActions(_actions));
+          await _preferences.setString(
+            _visaPlansKey,
+            _encodeVisaPlans(_visaPlans),
+          );
+        } catch (_) {}
+      }
+      for (final file in importedFiles) {
+        try {
+          await _fileStore.deleteFile(file);
+        } catch (_) {}
+      }
+      rethrow;
+    }
+  }
+
+  static String _newImportedId() =>
+      '${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(1 << 32)}';
+
+  static String _encodePlaces(List<Place> places) =>
+      jsonEncode(places.map((place) => place.toJson()).toList());
+
+  static String _encodeActions(List<TripAction> actions) =>
+      jsonEncode(actions.map((action) => action.toJson()).toList());
+
+  static String _encodeVisaPlans(List<VisaPlan> plans) =>
+      jsonEncode(plans.map((plan) => plan.toJson()).toList());
 
   Future<StoredFile> _importPickedFile(PlatformFile source) async {
     final imported = await _fileStore.importFile(source);

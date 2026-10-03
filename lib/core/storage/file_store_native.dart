@@ -79,6 +79,27 @@ class FileStore {
     }
   }
 
+  Future<StoredFile> importBytes(String name, List<int> bytes) async {
+    final cleanName = name.split(RegExp(r'[/\\]')).last.trim();
+    if (cleanName.isEmpty || cleanName == '.' || cleanName == '..') {
+      throw const FormatException('The attachment has no valid name.');
+    }
+    final file = StoredFile(
+      id: '${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(1 << 32)}',
+      name: cleanName,
+      size: bytes.length,
+      importedAt: DateTime.now(),
+    );
+    final destination = await _storedFile(file);
+    try {
+      await destination.writeAsBytes(bytes, flush: true);
+    } catch (_) {
+      if (await destination.exists()) await destination.delete();
+      rethrow;
+    }
+    return file;
+  }
+
   Future<Uri?> exportFile(StoredFile file) async {
     final source = await _storedFile(file);
     return FilePicker.saveFile(

@@ -14,6 +14,11 @@ class FileStore {
         'Local file storage is available in the device app.',
       );
 
+  Future<StoredFile> importBytes(String name, List<int> bytes) async =>
+      throw UnsupportedError(
+        'Local file storage is available in the device app.',
+      );
+
   Future<Uri?> exportFile(StoredFile file) async => throw UnsupportedError(
     'Local file storage is available in the device app.',
   );

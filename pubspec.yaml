@@ -41,6 +41,7 @@ dependencies:
   latlong2: ^0.10.1
   path_provider: ^2.1.6
   pdfx: ^2.11.0
+  share_plus: ^13.3.1
   shared_preferences: ^2.5.5
   xml: ^7.0.1
 

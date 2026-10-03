@@ -71,12 +71,13 @@ void main() {
       plannedFor: date,
     );
     final controller = _PlacesController([place]);
+    DateTime? requestedPlaceDay;
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: PlacesPage(
             controller: controller,
-            onAdd: (_) {},
+            onAdd: (day) => requestedPlaceDay = day,
             onShowOnMap: (_) {},
           ),
         ),
@@ -98,8 +99,25 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Add place for this day'), findsOneWidget);
+    expect(find.text('Add place for this day'), findsNothing);
+    await tester.ensureVisible(find.text('Add action'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add action'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Trip action'));
+    await tester.pumpAndSettle();
+    expect(find.text('Add trip action'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Add action'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Place to visit'));
+    await tester.pumpAndSettle();
+    expect(requestedPlaceDay, date);
+
+    await tester.ensureVisible(day);
+    await tester.pumpAndSettle();
     await tester.tap(day);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('calendar-place-kyoto')), findsNothing);
@@ -139,6 +157,15 @@ void main() {
       ),
     );
 
+    expect(
+      find.byKey(
+        ValueKey(
+          'calendar-reservation-warning-${date.year}-${date.month}-${date.day}',
+        ),
+      ),
+      findsOneWidget,
+    );
+
     await tester.tap(
       find.byKey(
         ValueKey('calendar-day-${date.year}-${date.month}-${date.day}'),
@@ -146,6 +173,10 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('trip-action-train')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('reservation-warning-train')),
+      findsOneWidget,
+    );
     expect(find.text('Need reservation'), findsOneWidget);
     expect(find.text('9:30 AM'), findsOneWidget);
 
@@ -159,7 +190,9 @@ void main() {
       TextDecoration.lineThrough,
     );
 
-    await tester.ensureVisible(find.text('Postpone'));
+    await tester.ensureVisible(find.byTooltip('Options for Train to Paris'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Options for Train to Paris'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Postpone'));
     await tester.pumpAndSettle();
@@ -167,7 +200,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(controller.actions.single.day, DateTime(date.year, date.month, 16));
 
-    await tester.ensureVisible(find.text('Delete').last);
+    await tester.ensureVisible(find.byTooltip('Options for Train to Paris'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Options for Train to Paris'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete').last);
     await tester.pumpAndSettle();

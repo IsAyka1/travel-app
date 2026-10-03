@@ -30,8 +30,8 @@ class _TravelAppState extends State<TravelApp> {
   @override
   Widget build(BuildContext context) {
     final colors = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF176C68),
-      surface: const Color(0xFFFCFBF8),
+      seedColor: const Color(0xFF1976B8),
+      surface: const Color(0xFFF8FBFF),
     );
     return MaterialApp(
       title: 'Travel Atlas',
@@ -39,7 +39,7 @@ class _TravelAppState extends State<TravelApp> {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: colors,
-        scaffoldBackgroundColor: const Color(0xFFF6F5F1),
+        scaffoldBackgroundColor: const Color(0xFFF1F7FC),
         cardTheme: CardThemeData(
           color: Colors.white,
           elevation: 0,
@@ -293,7 +293,7 @@ class _OverviewPage extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(26),
             gradient: const LinearGradient(
-              colors: [Color(0xFF125E5B), Color(0xFF348D7F)],
+              colors: [Color(0xFF0E5E9D), Color(0xFF55A9D9)],
             ),
           ),
           child: Wrap(
@@ -310,7 +310,7 @@ class _OverviewPage extends StatelessWidget {
                     Text(
                       'YOUR TRAVEL SPACE',
                       style: TextStyle(
-                        color: Color(0xFFC8E6DF),
+                        color: Color(0xFFD7EEFF),
                         letterSpacing: 2,
                       ),
                     ),
@@ -327,7 +327,7 @@ class _OverviewPage extends StatelessWidget {
                     SizedBox(height: 12),
                     Text(
                       'Save places, see them on the map, and keep trip files on this device.',
-                      style: TextStyle(color: Color(0xFFE2F2ED), fontSize: 16),
+                      style: TextStyle(color: Color(0xFFEAF6FF), fontSize: 16),
                     ),
                   ],
                 ),
@@ -338,38 +338,60 @@ class _OverviewPage extends StatelessWidget {
                 label: const Text('Add a place'),
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF125E5B),
+                  foregroundColor: const Color(0xFF0E5E9D),
                 ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 24),
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            _StatCard(
-              icon: Icons.place,
-              label: 'Saved places',
-              value: '${controller.places.length}',
-            ),
-            _StatCard(
-              icon: Icons.check_circle,
-              label: 'Visited',
-              value: '$visited',
-            ),
-            _StatCard(
-              icon: Icons.folder,
-              label: 'Trip files',
-              value: '${controller.files.length}',
-            ),
-            _StatCard(
-              icon: Icons.description,
-              label: 'Visa plans',
-              value: '${controller.visaPlans.length}',
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 700 ? 4 : 2;
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: GridView.count(
+                  crossAxisCount: columns,
+                  childAspectRatio: columns == 4 ? 1.65 : 1.75,
+                  mainAxisSpacing: 4,
+                  crossAxisSpacing: 4,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    _SummaryItem(
+                      icon: Icons.place_outlined,
+                      label: 'Saved places',
+                      value: '${controller.places.length}',
+                      destination: 'Calendar',
+                      onTap: onOpenPlaces,
+                    ),
+                    _SummaryItem(
+                      icon: Icons.check_circle_outline,
+                      label: 'Visited',
+                      value: '$visited',
+                      destination: 'Calendar',
+                      onTap: onOpenPlaces,
+                    ),
+                    _SummaryItem(
+                      icon: Icons.folder_outlined,
+                      label: 'Trip files',
+                      value: '${controller.files.length}',
+                      destination: 'Files',
+                      onTap: onOpenFiles,
+                    ),
+                    _SummaryItem(
+                      icon: Icons.description_outlined,
+                      label: 'Visa plans',
+                      value: '${controller.visaPlans.length}',
+                      destination: 'Visa',
+                      onTap: onOpenVisas,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
         const SizedBox(height: 30),
         Text(
@@ -415,21 +437,6 @@ class _OverviewPage extends StatelessWidget {
               label: const Text('Open map'),
             ),
             OutlinedButton.icon(
-              onPressed: onOpenPlaces,
-              icon: const Icon(Icons.calendar_month_outlined),
-              label: const Text('Open calendar'),
-            ),
-            OutlinedButton.icon(
-              onPressed: onOpenFiles,
-              icon: const Icon(Icons.folder_outlined),
-              label: const Text('My files'),
-            ),
-            OutlinedButton.icon(
-              onPressed: onOpenVisas,
-              icon: const Icon(Icons.description_outlined),
-              label: const Text('Visa plans'),
-            ),
-            OutlinedButton.icon(
               onPressed: onOpenSharing,
               icon: const Icon(Icons.share_outlined),
               label: const Text('Share trips'),
@@ -441,31 +448,44 @@ class _OverviewPage extends StatelessWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
+class _SummaryItem extends StatelessWidget {
+  const _SummaryItem({
     required this.icon,
     required this.label,
     required this.value,
+    required this.destination,
+    required this.onTap,
   });
 
   final IconData icon;
   final String label;
   final String value;
+  final String destination;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 180,
-    child: Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 18),
-            Text(value, style: Theme.of(context).textTheme.headlineMedium),
-            Text(label),
-          ],
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: '$label: $value. Open $destination',
+    child: Ink(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer
+            .withValues(alpha: 0.28),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Theme.of(context).colorScheme.primary),
+              Text(value, style: Theme.of(context).textTheme.titleLarge),
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ],
+          ),
         ),
       ),
     ),

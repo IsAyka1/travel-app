@@ -111,7 +111,7 @@ class _TripActionEditorDialogState extends State<_TripActionEditorDialog> {
             reservation: reservation,
             placeId: selectedPlaceId,
             attachmentId: selectedAttachmentId,
-          ).copyWith(done: done)
+          )
         : widget.action!.copyWith(
             title: title.text.trim(),
             notes: notes.text.trim(),
@@ -272,12 +272,13 @@ class _TripActionEditorDialogState extends State<_TripActionEditorDialog> {
                   if (importing) const LinearProgressIndicator(),
                 ],
                 if (importError != null) Text(importError!),
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Done'),
-                  value: done,
-                  onChanged: (value) => setState(() => done = value ?? false),
-                ),
+                if (widget.action != null)
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Done'),
+                    value: done,
+                    onChanged: (value) => setState(() => done = value ?? false),
+                  ),
               ],
             ),
           ),

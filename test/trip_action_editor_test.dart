@@ -71,6 +71,7 @@ void main() {
 
     await tester.tap(find.text('Add action'));
     await tester.pumpAndSettle();
+    expect(find.text('Done'), findsNothing);
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Action'),
       'Visit museum',
@@ -81,14 +82,18 @@ void main() {
     await tester.tap(find.text('Need reservation').last);
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.byType(DropdownButtonFormField<String>).first);
+    await tester.ensureVisible(
+      find.byType(DropdownButtonFormField<String>).first,
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byType(DropdownButtonFormField<String>).first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Louvre').last);
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.byType(DropdownButtonFormField<String>).last);
+    await tester.ensureVisible(
+      find.byType(DropdownButtonFormField<String>).last,
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byType(DropdownButtonFormField<String>).last);
     await tester.pumpAndSettle();
@@ -110,5 +115,6 @@ void main() {
     expect(saved?.reservation, ReservationStatus.need);
     expect(saved?.placeId, 'louvre');
     expect(saved?.attachmentId, 'ticket');
+    expect(saved?.done, isFalse);
   });
 }

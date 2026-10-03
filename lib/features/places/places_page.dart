@@ -7,6 +7,10 @@ import 'place_editor.dart';
 import 'trip_action.dart';
 import 'trip_action_editor.dart';
 
+enum _NewDayItem { action, place }
+
+enum _ActionOperation { edit, postpone, delete }
+
 class PlacesPage extends StatefulWidget {
   const PlacesPage({
     super.key,
@@ -45,6 +49,7 @@ class _PlacesPageState extends State<PlacesPage> {
     );
     final leadingDays = monthStart.weekday - DateTime.monday;
     final counts = <int, int>{};
+    final reservationWarnings = <int>{};
     for (final place in allPlaces) {
       final date = place.plannedFor;
       if (date != null &&
@@ -57,6 +62,9 @@ class _PlacesPageState extends State<PlacesPage> {
       final date = action.day;
       if (date.year == shownMonth.year && date.month == shownMonth.month) {
         counts.update(date.day, (count) => count + 1, ifAbsent: () => 1);
+        if (action.reservation == ReservationStatus.need) {
+          reservationWarnings.add(date.day);
+        }
       }
     }
     final dayPlaces =
@@ -174,7 +182,7 @@ class _PlacesPageState extends State<PlacesPage> {
                       final today = DateUtils.isSameDay(DateTime.now(), date);
                       return Semantics(
                         label:
-                            '$day ${MaterialLocalizations.of(context).formatMonthYear(date)}, $count planned ${count == 1 ? 'item' : 'items'}',
+                            '$day ${MaterialLocalizations.of(context).formatMonthYear(date)}, $count planned ${count == 1 ? 'item' : 'items'}${reservationWarnings.contains(day) ? ', reservation needed' : ''}',
                         button: true,
                         selected: selected,
                         child: InkWell(
@@ -198,17 +206,33 @@ class _PlacesPageState extends State<PlacesPage> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text('$day'),
-                                if (count > 0)
-                                  CircleAvatar(
-                                    radius: 9,
-                                    backgroundColor: colors.primary,
-                                    child: Text(
-                                      count > 9 ? '9+' : '$count',
-                                      style: TextStyle(
-                                        color: colors.onPrimary,
-                                        fontSize: 10,
-                                      ),
-                                    ),
+                                if (count > 0 ||
+                                    reservationWarnings.contains(day))
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      if (count > 0)
+                                        CircleAvatar(
+                                          radius: 9,
+                                          backgroundColor: colors.primary,
+                                          child: Text(
+                                            count > 9 ? '9+' : '$count',
+                                            style: TextStyle(
+                                              color: colors.onPrimary,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        ),
+                                      if (reservationWarnings.contains(day))
+                                        Icon(
+                                          Icons.priority_high,
+                                          key: ValueKey(
+                                            'calendar-reservation-warning-${date.year}-${date.month}-${date.day}',
+                                          ),
+                                          color: const Color(0xFFF4B400),
+                                          size: 18,
+                                        ),
+                                    ],
                                   ),
                               ],
                             ),
@@ -236,7 +260,7 @@ class _PlacesPageState extends State<PlacesPage> {
                 for (final action in dayActions) _actionCard(action),
               const SizedBox(height: 8),
               FilledButton.icon(
-                onPressed: () => _addAction(selectedDay!),
+                onPressed: () => _showAddMenu(selectedDay!),
                 icon: const Icon(Icons.add_task),
                 label: const Text('Add action'),
               ),
@@ -250,12 +274,6 @@ class _PlacesPageState extends State<PlacesPage> {
                 const Text('No places planned for this day.')
               else
                 for (final place in dayPlaces) _calendarPlaceCard(place),
-              const SizedBox(height: 8),
-              FilledButton.icon(
-                onPressed: () => widget.onAdd(selectedDay),
-                icon: const Icon(Icons.add),
-                label: const Text('Add place for this day'),
-              ),
             ],
           ],
         ),
@@ -345,10 +363,21 @@ class _PlacesPageState extends State<PlacesPage> {
       ReservationStatus.need => 'Need reservation',
       ReservationStatus.has => 'Reservation confirmed',
     };
+    final colors = Theme.of(context).colorScheme;
     return Card.outlined(
       key: ValueKey('trip-action-${action.id}'),
+      margin: const EdgeInsets.only(bottom: 6),
+      color: colors.primaryContainer.withValues(alpha: 0.18),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: action.done
+              ? colors.outlineVariant
+              : colors.primary.withValues(alpha: 0.45),
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -356,6 +385,7 @@ class _PlacesPageState extends State<PlacesPage> {
               children: [
                 Checkbox(
                   value: action.done,
+                  visualDensity: VisualDensity.compact,
                   semanticLabel: action.done
                       ? 'Mark ${action.title} not done'
                       : 'Mark ${action.title} done',
@@ -365,60 +395,123 @@ class _PlacesPageState extends State<PlacesPage> {
                     ),
                   ),
                 ),
+                const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     action.title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       decoration: action.done
                           ? TextDecoration.lineThrough
                           : null,
                     ),
                   ),
                 ),
-                if (time != null) Text(time.format(context)),
+                if (action.reservation == ReservationStatus.need)
+                  Tooltip(
+                    message: 'Need reservation',
+                    child: Icon(
+                      Icons.priority_high,
+                      key: ValueKey('reservation-warning-${action.id}'),
+                      color: const Color(0xFFF4B400),
+                      size: 20,
+                    ),
+                  ),
+                if (time != null) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    time.format(context),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+                PopupMenuButton<_ActionOperation>(
+                  tooltip: 'Options for ${action.title}',
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (operation) {
+                    switch (operation) {
+                      case _ActionOperation.edit:
+                        _editAction(action);
+                      case _ActionOperation.postpone:
+                        _postponeAction(action);
+                      case _ActionOperation.delete:
+                        _deleteAction(action);
+                    }
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(
+                      value: _ActionOperation.edit,
+                      child: Text('Edit'),
+                    ),
+                    PopupMenuItem(
+                      value: _ActionOperation.postpone,
+                      child: Text('Postpone'),
+                    ),
+                    PopupMenuItem(
+                      value: _ActionOperation.delete,
+                      child: Text('Delete'),
+                    ),
+                  ],
+                ),
               ],
             ),
-            if (action.notes.isNotEmpty) Text(action.notes),
-            Text(reservationLabel),
-            if (place != null)
-              TextButton.icon(
-                onPressed: () => widget.onShowOnMap(place),
-                icon: const Icon(Icons.place_outlined),
-                label: Text(place.name),
-              )
-            else if (action.placeId != null)
-              const Text('Linked place is no longer available'),
-            if (attachment != null)
-              TextButton.icon(
-                onPressed: () => openFilePreview(
-                  context,
-                  controller: widget.controller,
-                  file: attachment,
+            if (action.notes.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(left: 44, right: 8),
+                child: Text(
+                  action.notes,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-                icon: const Icon(Icons.attach_file),
-                label: Text('View ${attachment.name}'),
-              )
-            else if (action.attachmentId != null)
-              const Text('Attachment is no longer available'),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                OutlinedButton(
-                  onPressed: () => _editAction(action),
-                  child: const Text('Edit'),
+              ),
+            if (action.reservation != ReservationStatus.none ||
+                place != null ||
+                action.placeId != null ||
+                attachment != null ||
+                action.attachmentId != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 44),
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  children: [
+                    if (action.reservation != ReservationStatus.none)
+                      Text(
+                        reservationLabel,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    if (place != null)
+                      TextButton.icon(
+                        onPressed: () => widget.onShowOnMap(place),
+                        icon: const Icon(Icons.place_outlined, size: 16),
+                        label: Text(place.name),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        ),
+                      )
+                    else if (action.placeId != null)
+                      const Text('Linked place is no longer available'),
+                    if (attachment != null)
+                      TextButton.icon(
+                        onPressed: () => openFilePreview(
+                          context,
+                          controller: widget.controller,
+                          file: attachment,
+                        ),
+                        icon: const Icon(Icons.attach_file, size: 16),
+                        label: Text('View ${attachment.name}'),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        ),
+                      )
+                    else if (action.attachmentId != null)
+                      const Text('Attachment is no longer available'),
+                  ],
                 ),
-                OutlinedButton(
-                  onPressed: () => _postponeAction(action),
-                  child: const Text('Postpone'),
-                ),
-                TextButton(
-                  onPressed: () => _deleteAction(action),
-                  child: const Text('Delete'),
-                ),
-              ],
-            ),
+              ),
           ],
         ),
       ),
@@ -435,6 +528,38 @@ class _PlacesPageState extends State<PlacesPage> {
             .showSnackBar(SnackBar(content: Text('Could not save: $error')));
       }
       return false;
+    }
+  }
+
+  Future<void> _showAddMenu(DateTime day) async {
+    final choice = await showModalBottomSheet<_NewDayItem>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.add_task),
+              title: const Text('Trip action'),
+              onTap: () => Navigator.pop(sheetContext, _NewDayItem.action),
+            ),
+            ListTile(
+              leading: const Icon(Icons.add_location_alt_outlined),
+              title: const Text('Place to visit'),
+              onTap: () => Navigator.pop(sheetContext, _NewDayItem.place),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) return;
+    switch (choice) {
+      case _NewDayItem.action:
+        await _addAction(day);
+      case _NewDayItem.place:
+        widget.onAdd(day);
+      case null:
+        break;
     }
   }
 

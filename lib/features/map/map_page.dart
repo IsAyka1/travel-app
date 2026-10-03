@@ -253,7 +253,7 @@ class _MapPageState extends State<MapPage> {
                             onPressed: () =>
                                 widget.onSaveFoundPlace(selectedResult!),
                             icon: const Icon(Icons.bookmark_add_outlined),
-                            label: const Text('Save to places to visit'),
+                            label: const Text('Save place'),
                           ),
                         ],
                         if (results.isEmpty &&

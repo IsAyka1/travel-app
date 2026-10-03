@@ -560,7 +560,7 @@ class _PlacesPageState extends State<PlacesPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Places to visit',
+                  'Calendar',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 4),

@@ -76,7 +76,7 @@ class _TravelShellState extends State<TravelShell> {
   static const titles = [
     'Overview',
     'Map',
-    'Places to visit',
+    'Calendar',
     'Files',
     'Visa',
     'Share trips',
@@ -84,7 +84,7 @@ class _TravelShellState extends State<TravelShell> {
   static const icons = [
     Icons.dashboard_outlined,
     Icons.map_outlined,
-    Icons.place_outlined,
+    Icons.calendar_month_outlined,
     Icons.folder_outlined,
     Icons.description_outlined,
     Icons.share_outlined,
@@ -92,7 +92,7 @@ class _TravelShellState extends State<TravelShell> {
   static const selectedIcons = [
     Icons.dashboard,
     Icons.map,
-    Icons.place,
+    Icons.calendar_month,
     Icons.folder,
     Icons.description,
     Icons.share,
@@ -416,8 +416,8 @@ class _OverviewPage extends StatelessWidget {
             ),
             OutlinedButton.icon(
               onPressed: onOpenPlaces,
-              icon: const Icon(Icons.place_outlined),
-              label: const Text('All places'),
+              icon: const Icon(Icons.calendar_month_outlined),
+              label: const Text('Open calendar'),
             ),
             OutlinedButton.icon(
               onPressed: onOpenFiles,

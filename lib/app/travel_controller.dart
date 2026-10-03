@@ -8,6 +8,7 @@ import '../core/storage/file_store.dart';
 import '../features/files/stored_file.dart';
 import '../features/places/place.dart';
 import '../features/places/trip_action.dart';
+import '../features/visa/visa_plan.dart';
 
 class TravelController extends ChangeNotifier {
   TravelController({FileStore? fileStore, SharedPreferencesAsync? preferences})
@@ -16,18 +17,21 @@ class TravelController extends ChangeNotifier {
 
   static const _placesKey = 'travel_app_places_v1';
   static const _actionsKey = 'travel_app_actions_v1';
+  static const _visaPlansKey = 'travel_app_visa_plans_v1';
 
   final FileStore _fileStore;
   final SharedPreferencesAsync _preferences;
 
   List<Place> _places = [];
   List<TripAction> _actions = [];
+  List<VisaPlan> _visaPlans = [];
   List<StoredFile> _files = [];
   bool _isLoading = true;
   String? _loadError;
 
   List<Place> get places => List.unmodifiable(_places);
   List<TripAction> get actions => List.unmodifiable(_actions);
+  List<VisaPlan> get visaPlans => List.unmodifiable(_visaPlans);
   List<StoredFile> get files => List.unmodifiable(_files);
   bool get isLoading => _isLoading;
   bool get supportsFiles => _fileStore.isAvailable;
@@ -47,6 +51,13 @@ class TravelController extends ChangeNotifier {
         final decoded = jsonDecode(rawActions) as List<dynamic>;
         _actions = decoded
             .map((entry) => TripAction.fromJson(entry as Map<String, dynamic>))
+            .toList();
+      }
+      final rawVisaPlans = await _preferences.getString(_visaPlansKey);
+      if (rawVisaPlans != null) {
+        final decoded = jsonDecode(rawVisaPlans) as List<dynamic>;
+        _visaPlans = decoded
+            .map((entry) => VisaPlan.fromJson(entry as Map<String, dynamic>))
             .toList();
       }
       _files = await _fileStore.loadFiles();
@@ -96,6 +107,26 @@ class TravelController extends ChangeNotifier {
 
   Future<void> deleteAction(String id) =>
       _saveActions(_actions.where((action) => action.id != id).toList());
+
+  Future<void> _saveVisaPlans(List<VisaPlan> next) async {
+    await _preferences.setString(
+      _visaPlansKey,
+      jsonEncode(next.map((plan) => plan.toJson()).toList()),
+    );
+    _visaPlans = next;
+    notifyListeners();
+  }
+
+  Future<void> addVisaPlan(VisaPlan plan) =>
+      _saveVisaPlans([..._visaPlans, plan]);
+
+  Future<void> updateVisaPlan(VisaPlan plan) => _saveVisaPlans([
+    for (final current in _visaPlans)
+      if (current.id == plan.id) plan else current,
+  ]);
+
+  Future<void> deleteVisaPlan(String id) =>
+      _saveVisaPlans(_visaPlans.where((plan) => plan.id != id).toList());
 
   Future<StoredFile> _importPickedFile(PlatformFile source) async {
     final imported = await _fileStore.importFile(source);

@@ -7,6 +7,7 @@ import '../features/map/place_search_service.dart';
 import '../features/places/place.dart';
 import '../features/places/place_editor.dart';
 import '../features/places/places_page.dart';
+import '../features/visa/visa_page.dart';
 import 'travel_controller.dart';
 
 class TravelApp extends StatefulWidget {
@@ -71,18 +72,20 @@ class _TravelShellState extends State<TravelShell> {
   int selectedPage = 0;
   Place? mapFocus;
 
-  static const titles = ['Overview', 'Map', 'Places to visit', 'Files'];
+  static const titles = ['Overview', 'Map', 'Places to visit', 'Files', 'Visa'];
   static const icons = [
     Icons.dashboard_outlined,
     Icons.map_outlined,
     Icons.place_outlined,
     Icons.folder_outlined,
+    Icons.description_outlined,
   ];
   static const selectedIcons = [
     Icons.dashboard,
     Icons.map,
     Icons.place,
     Icons.folder,
+    Icons.description,
   ];
 
   void _navigate(int index, {Place? place}) {
@@ -139,6 +142,8 @@ class _TravelShellState extends State<TravelShell> {
         );
       case 3:
         return FilesPage(controller: widget.controller);
+      case 4:
+        return VisaPage(controller: widget.controller);
       default:
         return _OverviewPage(
           controller: widget.controller,
@@ -146,6 +151,7 @@ class _TravelShellState extends State<TravelShell> {
           onOpenMap: () => _navigate(1),
           onOpenPlaces: () => _navigate(2),
           onOpenFiles: () => _navigate(3),
+          onOpenVisas: () => _navigate(4),
         );
     }
   }
@@ -242,6 +248,7 @@ class _OverviewPage extends StatelessWidget {
     required this.onOpenMap,
     required this.onOpenPlaces,
     required this.onOpenFiles,
+    required this.onOpenVisas,
   });
 
   final TravelController controller;
@@ -249,6 +256,7 @@ class _OverviewPage extends StatelessWidget {
   final VoidCallback onOpenMap;
   final VoidCallback onOpenPlaces;
   final VoidCallback onOpenFiles;
+  final VoidCallback onOpenVisas;
 
   @override
   Widget build(BuildContext context) {
@@ -341,6 +349,11 @@ class _OverviewPage extends StatelessWidget {
               label: 'Trip files',
               value: '${controller.files.length}',
             ),
+            _StatCard(
+              icon: Icons.description,
+              label: 'Visa plans',
+              value: '${controller.visaPlans.length}',
+            ),
           ],
         ),
         const SizedBox(height: 30),
@@ -395,6 +408,11 @@ class _OverviewPage extends StatelessWidget {
               onPressed: onOpenFiles,
               icon: const Icon(Icons.folder_outlined),
               label: const Text('My files'),
+            ),
+            OutlinedButton.icon(
+              onPressed: onOpenVisas,
+              icon: const Icon(Icons.description_outlined),
+              label: const Text('Visa plans'),
             ),
           ],
         ),
